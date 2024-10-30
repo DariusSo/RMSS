@@ -29,6 +29,7 @@ public class MongoDBService {
 
     private Order documentToOrder(Document doc) {
         Order order = new Order();
+
         order.setOrderId(doc.getString("orderId"));
         order.setClient(doc.getString("client"));
         order.setTable(doc.getInteger("table"));
@@ -36,7 +37,7 @@ public class MongoDBService {
         order.setDishes(doc.getList("dishes", String.class));
         order.setOrderTime(convertToLocalDateTimeViaInstant(doc.getDate("orderTime")));
         order.setProccessingTime(convertToLocalDateTimeViaInstant(doc.getDate("proccessingTime")));
-        //System.out.println("Rado: " + order.getOrderId());
+
         return order;
     }
 
@@ -53,7 +54,18 @@ public class MongoDBService {
             if(!order.getStatus().equals("ready")){
                 orderList.add(order);
             }
-            //System.out.println("Found all: " + order.getOrderId());
+        }
+        return orderList;
+    }
+
+    public List<Order> getAllReady(){
+        FindIterable<Document> doc = collection.find();
+        List<Order> orderList = new ArrayList<>();
+        for(Document d : doc){
+            Order order = documentToOrder(d);
+            if(order.getStatus().equals("ready")){
+                orderList.add(order);
+            }
         }
         return orderList;
     }
@@ -65,9 +77,17 @@ public class MongoDBService {
         if(dateToConvert == null){
             return null;
         }
+
         return dateToConvert.toInstant()
                 .atZone(ZoneId.of("Europe/Vilnius"))
                 .toLocalDateTime();
+    }
+    public String createOrderId(){
+        List<Order> orders = getAll();
+        if(orders.isEmpty()){
+            return "1";
+        }
+        return String.valueOf(Integer.parseInt(orders.get(orders.size() - 1).getOrderId()) + 1);
     }
 }
 
